@@ -31,7 +31,43 @@ resource "aws_s3_bucket" "app" {
       condition     = self.id == local.nombre_bucket
       error_message = "El ID del bucket no coincide con el nombre esperado."
     }
-
   }
 }
 
+# Versionado: solo en staging y prod
+resource "aws_s3_bucket_versioning" "app" {
+  count  = var.configuracion_bucket.versionado ? 1 : 0
+  bucket = aws_s3_bucket.app.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+# Regla de expiración de objetos
+resource "aws_s3_bucket_lifecycle_configuration" "app" {
+  bucket = aws_s3_bucket.app.id
+
+  rule {
+    id     = "expiry-rule"
+    status = "Enabled"
+
+    expiration {
+      days = var.configuracion_bucket.dias_expiry
+    }
+  }
+
+  lifecycle {
+    # Si cambia el bucket (recreación), recrear también esta configuración
+    replace_triggered_by = [aws_s3_bucket.app]
+  }
+}
+
+# check block: valida el estado final sin bloquear
+
+check "bucket_configurado_correctamente" {
+  assert {
+    condition     = aws_s3_bucket.app.id != ""
+    error_message = "El bucket debe tener un ID asignado."
+  }
+}
