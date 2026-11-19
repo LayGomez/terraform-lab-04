@@ -3,7 +3,7 @@ locals {
   es_produccion = var.entorno == "prod"
 }
 
-resource "randon_id" "sufijo" {
+resource "random_id" "sufijo" {
   byte_length = 4
 }
 
@@ -19,7 +19,7 @@ resource "aws_s3_bucket" "app" {
     prevent_destroy = false #poner true para prod real
 
     # Ignorar cambios en tags (otros sistemas los gestionan)
-    ignore_changes = [tag]
+    ignore_changes = [tags]
 
     # Validar que el bucket tiene el nombre correcto
     precondition {
